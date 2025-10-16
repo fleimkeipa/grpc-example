@@ -140,7 +140,7 @@ grpcurl -plaintext \
 
 - All queries are optimized with indexed lookups and minimal joins.
 
-- Stateless gRPC service — easy to scale horizontally with load balancers.
+- Stateless gRPC service is easy to scale horizontally with load balancers.
 
 - PostgreSQL connection pooling can be managed by pgbouncer or a similar proxy.
 
