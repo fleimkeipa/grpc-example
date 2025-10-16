@@ -1,8 +1,8 @@
-### 📘 Explore Service (Backend Candidate Exercise - Summer 2024)
+### 📘 Explore Service
 #### 🧠 Overview
 
-This project implements a subset of Muzz’s production Explore Service, which manages user interactions (likes/passes) in the matching system.
-It’s built with Go, gRPC, and PostgreSQL, and follows clean, modular architecture.
+This project implements a subset of the production Explore Service, which manages user interactions (likes/passes) in the matching system.
+It’s built with Go, gRPC, and PostgreSQL, and follows a clean, modular architecture.
 
 #### 🏗️ Architecture
 
@@ -169,10 +169,3 @@ Example unit tests cover:
 - Pagination is omitted for simplicity (can be added using OFFSET/LIMIT or tokens).
 
 - No authentication — internal microservice-level access only.
-
-#### 👨‍💻 Author
-
-Adem Şahin
-Backend Engineer — Go, gRPC, Kubernetes, Distributed Systems
-LinkedIn | GitHub
-# grpc-example
