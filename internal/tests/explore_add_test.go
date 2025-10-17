@@ -38,6 +38,5 @@ func TestPutDecision(t *testing.T) {
 		}
 
 		log.Printf("[%d] success: %+v (%.2fms)", i, resp, float64(time.Since(start).Milliseconds()))
-		// time.Sleep(2 * time.Millisecond) // delay optional
 	}
 }
