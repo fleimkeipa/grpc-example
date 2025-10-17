@@ -1,4 +1,5 @@
-FROM golang:1.25 AS builder
+# Build stage
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -7,12 +8,10 @@ RUN go mod download
 
 COPY . .
 
-# gRPC ve Protobuf kodlarını derle (eğer henüz generate edilmediyse)
-# RUN protoc --go_out=. --go-grpc_out=. proto/explore.proto
-
 RUN CGO_ENABLED=0 GOOS=linux go build -o explore-service ./cmd/main.go
 
-FROM debian:bookworm-slim
+# Runtime stage
+FROM alpine:latest
 
 WORKDIR /app
 
