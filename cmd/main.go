@@ -111,6 +111,8 @@ func createTable(db *sql.DB) {
 		updated_at TIMESTAMPTZ DEFAULT NOW(),
 		PRIMARY KEY (actor_user_id, recipient_user_id)
 	);
+	CREATE INDEX idx_decisions_created_at ON decisions (created_at DESC);
+	CREATE INDEX idx_decisions_updated_at ON decisions (updated_at DESC);
 	CREATE INDEX IF NOT EXISTS idx_recipient_user_id ON decisions (recipient_user_id);
 	CREATE INDEX IF NOT EXISTS idx_actor_user_id ON decisions (actor_user_id);
 	`
