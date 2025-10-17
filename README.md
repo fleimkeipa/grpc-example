@@ -17,12 +17,14 @@ explore-service/
 │   ├── server/                # gRPC service implementation
 │   │   └── explore.go
 │   ├── repository/            # Database queries and persistence
-│   │   └── decision_repo.go
-│   └── models/                # Domain models (if needed)
+│   │   └── decision.go
+│   └── models/                # Domain models
+│   └── tests/                 # Tests for all logics
 ├── proto/
 │   └── explore.proto          # Protocol buffer definition
 ├── Dockerfile
 ├── docker-compose.yml
+├── makefile
 └── README.md
 ```
 
@@ -54,16 +56,17 @@ explore-service/
 
 ```sql
 CREATE TABLE IF NOT EXISTS decisions (
-actor_user_id TEXT NOT NULL,
-recipient_user_id TEXT NOT NULL,
-liked_recipient BOOLEAN NOT NULL,
-created_at TIMESTAMPTZ DEFAULT NOW(),
-updated_at TIMESTAMPTZ DEFAULT NOW(),
-PRIMARY KEY (actor_user_id, recipient_user_id)
+  actor_user_id TEXT NOT NULL,
+  recipient_user_id TEXT NOT NULL,
+  liked_recipient BOOLEAN NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (actor_user_id, recipient_user_id)
 );
-
-CREATE INDEX IF NOT EXISTS idx_recipient_user_id ON decisions (recipient_user_id);
-CREATE INDEX IF NOT EXISTS idx_actor_user_id ON decisions (actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_decisions_created_at ON decisions (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_decisions_updated_at ON decisions (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_recipient_user_id ON decisions (recipient_user_id) WHERE liked_recipient = true;
+CREATE INDEX IF NOT EXISTS idx_actor_user_id ON decisions (actor_user_id) WHERE liked_recipient = true;
 ```
 
 ---
@@ -130,7 +133,7 @@ Returns likers with:
 
 ```
 grpcurl -plaintext \
- -d '{"actor_user_id":"alice","recipient_user_id":"bob","liked_recipient":true}' \
+ -d '{"actor_user_id":"1","recipient_user_id":"2","liked_recipient":true}' \
  localhost:50051 explore.ExploreService/PutDecision
 ```
 
@@ -138,7 +141,7 @@ grpcurl -plaintext \
 
 ```
 grpcurl -plaintext \
- -d '{"recipient_user_id":"bob"}' \
+ -d '{"recipient_user_id":"2"}' \
  localhost:50051 explore.ExploreService/ListLikedYou
 ```
 
@@ -146,7 +149,7 @@ grpcurl -plaintext \
 
 ```
 grpcurl -plaintext \
- -d '{"recipient_user_id":"bob"}' \
+ -d '{"recipient_user_id":"2"}' \
  localhost:50051 explore.ExploreService/ListNewLikedYou
 ```
 
@@ -154,7 +157,7 @@ grpcurl -plaintext \
 
 ```
 grpcurl -plaintext \
- -d '{"recipient_user_id":"bob"}' \
+ -d '{"recipient_user_id":"2"}' \
  localhost:50051 explore.ExploreService/CountLikedYou
 ```
 
@@ -197,7 +200,5 @@ Example unit tests cover:
 - Users are represented only by their IDs (no profiles).
 
 - Mutual like means both users have liked_recipient = true towards each other.
-
-- Pagination is omitted for simplicity (can be added using OFFSET/LIMIT or tokens).
 
 - No authentication — internal microservice-level access only.
