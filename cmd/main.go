@@ -113,8 +113,8 @@ func createTable(db *sql.DB) {
 	);
 	CREATE INDEX IF NOT EXISTS idx_decisions_created_at ON decisions (created_at DESC);
 	CREATE INDEX IF NOT EXISTS idx_decisions_updated_at ON decisions (updated_at DESC);
-	CREATE INDEX IF NOT EXISTS idx_recipient_user_id ON decisions (recipient_user_id);
-	CREATE INDEX IF NOT EXISTS idx_actor_user_id ON decisions (actor_user_id);
+	CREATE INDEX IF NOT EXISTS idx_recipient_user_id ON decisions (recipient_user_id) WHERE liked_recipient = true;
+	CREATE INDEX IF NOT EXISTS idx_actor_user_id ON decisions (actor_user_id) WHERE liked_recipient = true;
 	`
 	if _, err := db.Exec(schema); err != nil {
 		log.Fatalf("DB migration failed: %v", err)
