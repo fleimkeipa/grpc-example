@@ -130,19 +130,22 @@ func getEnv(key, fallback string) string {
 }
 
 func loggingInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler) (any, error) {
 		start := time.Now()
 
 		resp, err := handler(ctx, req)
 
 		duration := time.Since(start)
 		code := codes.OK
+		message := "Success"
 		if err != nil {
-			code = status.Code(err)
+			stats := status.Convert(err)
+			code = stats.Code()
+			message = stats.Message()
 		}
 
-		log.Printf("[gRPC] %s - %s - %v", info.FullMethod, code, duration)
+		log.Printf("[gRPC] %s - %s - %s - %v", info.FullMethod, code, message, duration)
 
 		return resp, err
 	}

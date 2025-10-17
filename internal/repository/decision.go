@@ -77,8 +77,7 @@ func (r *DecisionRepository) PutDecision(ctx context.Context, d *models.Decision
 
 	_, err := stmt.ExecContext(ctx, d.ActorUserId, d.RecipientUserId, d.LikedRecipient)
 	if err != nil {
-		return fmt.Errorf("failed to put decision for actor=%s recipient=%s: %w",
-			d.ActorUserId, d.RecipientUserId, err)
+		return status.Errorf(codes.Internal, "failed to put decision for actor=%s recipient=%s: %v", d.ActorUserId, d.RecipientUserId, err.Error())
 	}
 
 	return nil
@@ -114,7 +113,7 @@ func (r *DecisionRepository) ListLikedYou(ctx context.Context, recipientID strin
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to list liked you for recipient=%s: %w", recipientID, err)
+		return nil, "", status.Errorf(codes.Internal, "failed to list liked you for recipient=%s: %v", recipientID, err)
 	}
 	defer rows.Close()
 
@@ -122,7 +121,7 @@ func (r *DecisionRepository) ListLikedYou(ctx context.Context, recipientID strin
 	for rows.Next() {
 		var d models.Decision
 		if err := rows.Scan(&d.ActorUserId, &d.RecipientUserId, &d.LikedRecipient, &d.CreatedAt, &d.UpdatedAt); err != nil {
-			return nil, "", fmt.Errorf("failed to scan decision for recipient=%s: %w", recipientID, err)
+			return nil, "", status.Errorf(codes.Internal, "failed to scan decision for recipient=%s: %v", recipientID, err)
 		}
 		decisions = append(decisions, d)
 	}
@@ -172,7 +171,7 @@ func (r *DecisionRepository) ListNewLikedYou(ctx context.Context, recipientID st
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to list new liked you for recipient=%s: %w", recipientID, err)
+		return nil, "", status.Errorf(codes.Internal, "failed to list new liked you for recipient=%s: %v", recipientID, err)
 	}
 	defer rows.Close()
 
@@ -180,7 +179,7 @@ func (r *DecisionRepository) ListNewLikedYou(ctx context.Context, recipientID st
 	for rows.Next() {
 		var d models.Decision
 		if err := rows.Scan(&d.ActorUserId, &d.RecipientUserId, &d.LikedRecipient, &d.CreatedAt, &d.UpdatedAt); err != nil {
-			return nil, "", fmt.Errorf("failed to scan decision for recipient=%s: %w", recipientID, err)
+			return nil, "", status.Errorf(codes.Internal, "failed to scan decision for recipient=%s: %v", recipientID, err)
 		}
 		decisions = append(decisions, d)
 	}
@@ -210,7 +209,7 @@ func (r *DecisionRepository) IsMutual(ctx context.Context, actorID, recipientID 
 	if err == sql.ErrNoRows {
 		actorLikedRecipient = false
 	} else if err != nil {
-		return false, fmt.Errorf("failed to check if actor=%s liked recipient=%s: %w", actorID, recipientID, err)
+		return false, status.Errorf(codes.Internal, "failed to check if actor=%s liked recipient=%s: %v", actorID, recipientID, err)
 	}
 
 	// Check if recipient liked actor
@@ -218,7 +217,7 @@ func (r *DecisionRepository) IsMutual(ctx context.Context, actorID, recipientID 
 	if err == sql.ErrNoRows {
 		recipientLikedActor = false
 	} else if err != nil {
-		return false, fmt.Errorf("failed to check if recipient=%s liked actor=%s: %w", recipientID, actorID, err)
+		return false, status.Errorf(codes.Internal, "failed to check if recipient=%s liked actor=%s: %v", recipientID, actorID, err)
 	}
 
 	// Both must have liked each other for it to be mutual
@@ -238,7 +237,7 @@ func (r *DecisionRepository) CountLikedYou(ctx context.Context, recipientID stri
 		return 0, nil
 	}
 	if err != nil {
-		return 0, fmt.Errorf("failed to count liked you for recipient=%s: %w", recipientID, err)
+		return 0, status.Errorf(codes.Internal, "failed to count liked you for recipient=%s: %v", recipientID, err)
 	}
 
 	return count, nil
