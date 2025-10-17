@@ -1,8 +1,11 @@
 ### 📘 Explore Service
+
 #### 🧠 Overview
 
 This project implements a subset of the production Explore Service, which manages user interactions (likes/passes) in the matching system.
 It’s built with Go, gRPC, and PostgreSQL, and follows a clean, modular architecture.
+
+---
 
 #### 🏗️ Architecture
 
@@ -24,14 +27,15 @@ explore-service/
 ```
 
 #### ⚙️ Technology Stack
-|Component |Purpose |
-|---|---|
-|Go (1.23) | Backend language|
-|gRPC + Protobuf | High-performance RPC communication|
-|PostgreSQL | Persistent data store|
-|Docker / Docker Compose | Containerization and local orchestration|
 
-🚀 Features
+| Component               | Purpose                                  |
+| ----------------------- | ---------------------------------------- |
+| Go (1.23)               | Backend language                         |
+| gRPC + Protobuf         | High-performance RPC communication       |
+| PostgreSQL              | Persistent data store                    |
+| Docker / Docker Compose | Containerization and local orchestration |
+
+**🚀 Features**
 
 - Implements 4 RPC endpoints:
 
@@ -46,7 +50,7 @@ explore-service/
 
 - Fully containerized for easy testing and deployment
 
-🧩 Database Schema
+**🧩 Database Schema**
 
 ```sql
 CREATE TABLE IF NOT EXISTS decisions (
@@ -61,6 +65,8 @@ PRIMARY KEY (actor_user_id, recipient_user_id)
 CREATE INDEX IF NOT EXISTS idx_recipient_user_id ON decisions (recipient_user_id);
 CREATE INDEX IF NOT EXISTS idx_actor_user_id ON decisions (actor_user_id);
 ```
+
+---
 
 #### 🐳 Run with Docker Compose
 
@@ -98,6 +104,26 @@ Server runs at:
 localhost:50051
 ```
 
+---
+
+#### Response Details
+
+##### ListLikedYou & ListNewLikedYou
+
+Returns likers with:
+
+- `actor_id`: User ID who liked
+- `unix_timestamp`: When the like occurred (Unix epoch seconds)
+- `next_pagination_token`: Token for next page (if more results exist)
+
+##### Pagination
+
+- Default page size: 30
+- Use `pagination_token` from previous response for next page
+- Results ordered by most recent likes first
+
+---
+
 #### 🧪 Example gRPC Calls
 
 1️⃣ PutDecision
@@ -132,6 +158,8 @@ grpcurl -plaintext \
  localhost:50051 explore.ExploreService/CountLikedYou
 ```
 
+---
+
 #### 🧱 Scaling Considerations
 
 - Primary key (actor_user_id, recipient_user_id) prevents duplicates and simplifies overwrites.
@@ -143,6 +171,8 @@ grpcurl -plaintext \
 - Stateless gRPC service is easy to scale horizontally with load balancers.
 
 - PostgreSQL connection pooling can be managed by pgbouncer or a similar proxy.
+
+---
 
 #### 🧰 Testing
 
@@ -159,6 +189,8 @@ Example unit tests cover:
 - Correct overwrite behavior
 
 - Query correctness for ListNewLikedYou and CountLikedYou
+
+---
 
 #### 🧾 Assumptions
 
