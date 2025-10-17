@@ -5,12 +5,12 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/lib/pq"
-
 	"github.com/fleimkeipa/grpc-example/internal/models"
 	"github.com/fleimkeipa/grpc-example/internal/repository"
 	"github.com/fleimkeipa/grpc-example/internal/server"
 	pb "github.com/fleimkeipa/grpc-example/proto"
+
+	_ "github.com/lib/pq"
 )
 
 func TestExploreServer_PutDecision(t *testing.T) {
@@ -19,7 +19,6 @@ func TestExploreServer_PutDecision(t *testing.T) {
 	defer contClose()
 
 	type fields struct {
-		repo *repository.DecisionRepository
 	}
 	type args struct {
 		ctx context.Context
@@ -34,10 +33,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "correct",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "correct",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -52,10 +49,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "correct - update exist one",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "correct - update exist one",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -70,10 +65,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "correct - false like",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "correct - false like",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -88,10 +81,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "correct - mutual",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "correct - mutual",
+			fields: fields{},
 			dummies: []models.Decision{
 				{
 					ActorUserId:     "55",
@@ -113,10 +104,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "error - same actor and recipient user ID",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "error - same actor and recipient user ID",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -129,10 +118,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "error - non-numeric actor user ID",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "error - non-numeric actor user ID",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -145,10 +132,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "error - non-numeric recipient user ID",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "error - non-numeric recipient user ID",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -161,10 +146,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "error - empty actor user ID",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "error - empty actor user ID",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -177,10 +160,8 @@ func TestExploreServer_PutDecision(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "error - empty recipient user ID",
-			fields: fields{
-				repo: repository.NewDecisionRepository(db),
-			},
+			name:   "error - empty recipient user ID",
+			fields: fields{},
 			args: args{
 				ctx: context.Background(),
 				req: &pb.PutDecisionRequest{
@@ -195,10 +176,15 @@ func TestExploreServer_PutDecision(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := server.NewExploreServer(tt.fields.repo)
+			r, err := repository.NewDecisionRepository(db)
+			if err != nil {
+				t.Fatalf("failed to init repo error = %v", err)
+			}
+
+			s := server.NewExploreServer(r)
 
 			for _, v := range tt.dummies {
-				err := tt.fields.repo.PutDecision(context.Background(), &v)
+				err := r.PutDecision(context.Background(), &v)
 				if err != nil {
 					t.Errorf("ExploreServer.PutDecision() failed to put dummy decision error = %v", err)
 					return

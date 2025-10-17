@@ -25,7 +25,12 @@ func main() {
 	db := initDB()
 	defer db.Close()
 
-	repo := repository.NewDecisionRepository(db)
+	repo, err := repository.NewDecisionRepository(db)
+	if err != nil {
+		log.Fatalf("failed to init repository: %v", err)
+	}
+	defer repo.Close()
+
 	svc := server.NewExploreServer(repo)
 
 	grpcServer := grpc.NewServer(

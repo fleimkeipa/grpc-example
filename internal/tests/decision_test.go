@@ -106,9 +106,12 @@ func TestDecisionRepository_PutDecision(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := repository.NewDecisionRepository(tt.fields.db)
+			r, err := repository.NewDecisionRepository(tt.fields.db)
+			if err != nil {
+				t.Fatalf("DecisionRepository.ListLikedYou() failed to init repo error = %v", err)
+			}
 
-			err := r.PutDecision(tt.args.ctx, tt.args.d)
+			err = r.PutDecision(tt.args.ctx, tt.args.d)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DecisionRepository.PutDecision() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -421,7 +424,10 @@ func TestDecisionRepository_ListLikedYou(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := repository.NewDecisionRepository(tt.fields.db)
+			r, err := repository.NewDecisionRepository(tt.fields.db)
+			if err != nil {
+				t.Fatalf("DecisionRepository.ListLikedYou() failed to init repo error = %v", err)
+			}
 
 			for _, v := range tt.dummies {
 				err := r.PutDecision(context.Background(), &v)
@@ -664,7 +670,10 @@ func TestDecisionRepository_IsMutual(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := repository.NewDecisionRepository(tt.fields.db)
+			r, err := repository.NewDecisionRepository(tt.fields.db)
+			if err != nil {
+				t.Fatalf("DecisionRepository.ListLikedYou() failed to init repo error = %v", err)
+			}
 
 			for _, v := range tt.dummies {
 				err := r.PutDecision(context.Background(), &v)
@@ -914,7 +923,10 @@ func TestDecisionRepository_CountLikedYou(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := repository.NewDecisionRepository(tt.fields.db)
+			r, err := repository.NewDecisionRepository(tt.fields.db)
+			if err != nil {
+				t.Fatalf("DecisionRepository.CountLikedYou() failed to init repo error = %v", err)
+			}
 
 			for _, v := range tt.dummies {
 				err := r.PutDecision(context.Background(), &v)
@@ -1085,7 +1097,10 @@ func TestDecisionRepository_ListNewLikedYou(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := repository.NewDecisionRepository(tt.fields.db)
+			r, err := repository.NewDecisionRepository(tt.fields.db)
+			if err != nil {
+				t.Fatalf("DecisionRepository.CountLikedYou() failed to init repo error = %v", err)
+			}
 
 			for _, v := range tt.dummies {
 				err := r.PutDecision(context.Background(), &v)
@@ -1158,7 +1173,10 @@ func TestDecisionRepository_ListNewLikedYou_Pagination(t *testing.T) {
 	defer db.Close()
 	defer contClose()
 
-	r := repository.NewDecisionRepository(db)
+	r, err := repository.NewDecisionRepository(db)
+	if err != nil {
+		t.Fatalf("failed to init repo error = %v", err)
+	}
 
 	// Prepare 65 incoming likes to recipient user1 (no mutual likes added)
 	const total = 65
