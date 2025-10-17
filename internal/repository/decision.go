@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"github.com/fleimkeipa/grpc-example/internal/models"
 
@@ -12,11 +13,59 @@ import (
 )
 
 type DecisionRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	stmts map[string]*sql.Stmt
+	mu    sync.RWMutex
 }
 
-func NewDecisionRepository(db *sql.DB) *DecisionRepository {
-	return &DecisionRepository{db: db}
+func NewDecisionRepository(db *sql.DB) (*DecisionRepository, error) {
+	repo := &DecisionRepository{
+		db:    db,
+		stmts: make(map[string]*sql.Stmt),
+	}
+
+	queries := map[string]string{
+		"countLikedYou": `
+            SELECT COUNT(*) 
+            FROM decisions 
+            WHERE recipient_user_id = $1 
+              AND liked_recipient = true
+        `,
+		"putDecision": `
+            INSERT INTO decisions (actor_user_id, recipient_user_id, liked_recipient,created_at, updated_at)
+            VALUES ($1, $2, $3, NOW(), NOW())
+            ON CONFLICT (actor_user_id, recipient_user_id)
+            DO UPDATE SET 
+                liked_recipient = EXCLUDED.liked_recipient,
+                updated_at = NOW()
+        `,
+		"checkMutualLikes": `
+            SELECT liked_recipient 
+            FROM decisions 
+            WHERE actor_user_id = $1 
+              AND recipient_user_id = $2
+        `,
+	}
+
+	for name, query := range queries {
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare %s: %w", name, err)
+		}
+		repo.stmts[name] = stmt
+	}
+
+	return repo, nil
+}
+
+func (r *DecisionRepository) Close() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, stmt := range r.stmts {
+		stmt.Close()
+	}
+	return nil
 }
 
 func (r *DecisionRepository) PutDecision(ctx context.Context, d *models.Decision) error {
@@ -24,12 +73,9 @@ func (r *DecisionRepository) PutDecision(ctx context.Context, d *models.Decision
 		return status.Error(codes.Canceled, "request cancelled")
 	}
 
-	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO decisions (actor_user_id, recipient_user_id, liked_recipient, created_at, updated_at)
-		VALUES ($1, $2, $3, NOW(), NOW())
-		ON CONFLICT (actor_user_id, recipient_user_id)
-		DO UPDATE SET liked_recipient = EXCLUDED.liked_recipient, updated_at = NOW();
-	`, d.ActorUserId, d.RecipientUserId, d.LikedRecipient)
+	stmt := r.stmts["putDecision"]
+
+	_, err := stmt.ExecContext(ctx, d.ActorUserId, d.RecipientUserId, d.LikedRecipient)
 	if err != nil {
 		return fmt.Errorf("failed to put decision for actor=%s recipient=%s: %w",
 			d.ActorUserId, d.RecipientUserId, err)
@@ -146,14 +192,12 @@ func (r *DecisionRepository) IsMutual(ctx context.Context, actorID, recipientID 
 		return false, status.Error(codes.Canceled, "request cancelled")
 	}
 
-	// Check if both users liked each other
+	stmt := r.stmts["checkMutualLikes"]
+
 	var actorLikedRecipient, recipientLikedActor bool
 
 	// Check if actor liked recipient
-	err := r.db.QueryRowContext(ctx, `
-		SELECT liked_recipient FROM decisions
-		WHERE actor_user_id = $1 AND recipient_user_id = $2
-	`, actorID, recipientID).Scan(&actorLikedRecipient)
+	err := stmt.QueryRowContext(ctx, actorID, recipientID).Scan(&actorLikedRecipient)
 	if err == sql.ErrNoRows {
 		actorLikedRecipient = false
 	} else if err != nil {
@@ -161,10 +205,7 @@ func (r *DecisionRepository) IsMutual(ctx context.Context, actorID, recipientID 
 	}
 
 	// Check if recipient liked actor
-	err = r.db.QueryRowContext(ctx, `
-		SELECT liked_recipient FROM decisions
-		WHERE actor_user_id = $1 AND recipient_user_id = $2
-	`, recipientID, actorID).Scan(&recipientLikedActor)
+	err = stmt.QueryRowContext(ctx, recipientID, actorID).Scan(&recipientLikedActor)
 	if err == sql.ErrNoRows {
 		recipientLikedActor = false
 	} else if err != nil {
@@ -180,11 +221,10 @@ func (r *DecisionRepository) CountLikedYou(ctx context.Context, recipientID stri
 		return 0, status.Error(codes.Canceled, "request cancelled")
 	}
 
-	var count int64
-	err := r.db.QueryRowContext(ctx, `
-		SELECT COUNT(*) FROM decisions WHERE recipient_user_id = $1 AND liked_recipient = TRUE
-	`, recipientID).Scan(&count)
+	stmt := r.stmts["countLikedYou"]
 
+	var count int64
+	err := stmt.QueryRowContext(ctx, recipientID).Scan(&count)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	}
