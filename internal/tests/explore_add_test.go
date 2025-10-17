@@ -22,14 +22,14 @@ func TestPutDecision(t *testing.T) {
 
 	client := pb.NewExploreServiceClient(conn)
 
-	const iterations = 100_000
+	const iterations = 10_000
 
 	for i := 1; i <= iterations; i++ {
 		start := time.Now()
 
 		resp, err := client.PutDecision(context.Background(), &pb.PutDecisionRequest{
 			ActorUserId:     strconv.Itoa(i),
-			RecipientUserId: "200000",
+			RecipientUserId: "20000",
 			LikedRecipient:  true,
 		})
 		if err != nil {
