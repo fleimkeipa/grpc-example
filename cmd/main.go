@@ -31,10 +31,24 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
 	log.Printf("Explore gRPC server is running on port %s", port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+	}()
+
+	<-quit
+	log.Println("Shutting down server...")
+
+	grpcServer.GracefulStop()
+	db.Close()
+
+	log.Println("Server stopped")
 }
 
 func initDB() *sql.DB {
