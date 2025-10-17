@@ -91,9 +91,15 @@ func (r *DecisionRepository) ListLikedYou(ctx context.Context, recipientID strin
 
 	const limit = 30
 	query := `
-		SELECT actor_user_id, recipient_user_id, liked_recipient, created_at, updated_at
+		SELECT 
+			actor_user_id, 
+			recipient_user_id, 
+			liked_recipient, 
+			created_at, 
+			updated_at
 		FROM decisions
-		WHERE recipient_user_id = $1 AND liked_recipient = TRUE
+		WHERE recipient_user_id = $1 
+			AND liked_recipient = TRUE
 	`
 	args := []any{recipientID}
 
@@ -139,15 +145,19 @@ func (r *DecisionRepository) ListNewLikedYou(ctx context.Context, recipientID st
 
 	const limit = 30
 	query := `
-		SELECT d1.actor_user_id, d1.recipient_user_id, d1.liked_recipient, d1.created_at, d1.updated_at
-		FROM decisions d1
-		LEFT JOIN decisions d2
-			ON d2.actor_user_id = $1
-			AND d2.recipient_user_id = d1.actor_user_id
-			AND d2.liked_recipient = TRUE
-		WHERE d1.recipient_user_id = $1
-			AND d1.liked_recipient = TRUE
-			AND d2.actor_user_id IS NULL
+	SELECT 	d1.actor_user_id,
+			d1.recipient_user_id,
+			d1.liked_recipient,
+			d1.created_at,
+			d1.updated_at
+	FROM decisions d1
+	LEFT JOIN decisions d2 
+		ON d2.actor_user_id = $1
+		AND d2.recipient_user_id = d1.actor_user_id
+		AND d2.liked_recipient = TRUE
+	WHERE d1.recipient_user_id = $1
+		AND d1.liked_recipient = TRUE
+		AND d2.actor_user_id IS NULL
 	`
 	args := []any{recipientID}
 
