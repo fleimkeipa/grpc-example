@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/fleimkeipa/grpc-example/internal/repository"
 	"github.com/fleimkeipa/grpc-example/internal/server"
@@ -13,6 +17,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -22,7 +28,10 @@ func main() {
 	repo := repository.NewDecisionRepository(db)
 	svc := server.NewExploreServer(repo)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(loggingInterceptor()),
+	)
+
 	pb.RegisterExploreServiceServer(grpcServer, svc)
 
 	port := getEnv("GRPC_PORT", "50051")
@@ -36,10 +45,10 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-	log.Printf("Explore gRPC server is running on port %s", port)
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+		log.Printf("Explore gRPC server is running on port %s", port)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve: %v", err)
+		}
 	}()
 
 	<-quit
@@ -102,4 +111,23 @@ func getEnv(key, fallback string) string {
 	}
 
 	return fallback
+}
+
+func loggingInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler) (interface{}, error) {
+		start := time.Now()
+
+		resp, err := handler(ctx, req)
+
+		duration := time.Since(start)
+		code := codes.OK
+		if err != nil {
+			code = status.Code(err)
+		}
+
+		log.Printf("[gRPC] %s - %s - %v", info.FullMethod, code, duration)
+
+		return resp, err
+	}
 }
