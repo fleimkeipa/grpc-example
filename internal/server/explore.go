@@ -57,6 +57,10 @@ func (s *ExploreServer) PutDecision(ctx context.Context, req *pb.PutDecisionRequ
 }
 
 func (s *ExploreServer) CountLikedYou(ctx context.Context, req *pb.CountLikedYouRequest) (*pb.CountLikedYouResponse, error) {
+	if req.RecipientUserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "recipient_user_id required")
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -69,6 +73,10 @@ func (s *ExploreServer) CountLikedYou(ctx context.Context, req *pb.CountLikedYou
 }
 
 func (s *ExploreServer) ListLikedYou(ctx context.Context, req *pb.ListLikedYouRequest) (*pb.ListLikedYouResponse, error) {
+	if req.RecipientUserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "recipient_user_id required")
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -100,6 +108,10 @@ func (s *ExploreServer) ListLikedYou(ctx context.Context, req *pb.ListLikedYouRe
 }
 
 func (s *ExploreServer) ListNewLikedYou(ctx context.Context, req *pb.ListLikedYouRequest) (*pb.ListLikedYouResponse, error) {
+	if req.RecipientUserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "recipient_user_id required")
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
