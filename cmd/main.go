@@ -77,9 +77,18 @@ func initDB() *sql.DB {
 		log.Fatalf("DB connection failed: %v", err)
 	}
 
-	if err := db.Ping(); err != nil {
+	db.SetMaxOpenConns(25)                  // Max connections
+	db.SetMaxIdleConns(10)                  // Idle connections
+	db.SetConnMaxLifetime(5 * time.Minute)  // Connection lifetime
+	db.SetConnMaxIdleTime(10 * time.Minute) // Idle timeout
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
 		log.Fatalf("DB ping failed: %v", err)
 	}
+
 	log.Println("Connected to PostgreSQL")
 
 	createTable(db)
