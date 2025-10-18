@@ -1,8 +1,7 @@
-.PHONY: all proto test build docker-up docker-down lint clean run help
+.PHONY: all test build docker-up docker-down lint clean run help
 
 # Variables
 BINARY_NAME=explore-service
-PROTO_DIR=proto
 COVERAGE_FILE=coverage.out
 
 # Default target
@@ -56,8 +55,8 @@ logs:
 db:
 	docker exec -it $$(docker-compose ps -q db) psql -U postgres -d explore
 
-## all: Run proto, test, and build
-all: proto test build
+## all: Run test, and build
+all: test build
 
 ## help: Show this help message
 help:
