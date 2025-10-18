@@ -60,7 +60,6 @@ func main() {
 	log.Println("Shutting down server...")
 
 	grpcServer.GracefulStop()
-	db.Close()
 
 	log.Println("Server stopped")
 }
